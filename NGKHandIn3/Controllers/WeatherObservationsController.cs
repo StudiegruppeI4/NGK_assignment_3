@@ -31,10 +31,10 @@ namespace NGKHandIn3.Controllers
 
         // GET: api/WeatherObservations/datetime
         [HttpGet("{dateTime}")]
-        public async Task<ActionResult<IEnumerable<WeatherObservation>>> GetWeatherObservations(string dateTime)
+        public async Task<ActionResult<IEnumerable<WeatherObservation>>> GetWeatherObservation(DateTime dateTime)
         {
-            DateTime time = DateTime.Parse(dateTime);
-            var weatherObservation = await _context.WeatherObservations.Where(wo => wo.Time == time).ToListAsync();
+            //DateTime time = DateTime.Parse(dateTime);
+            var weatherObservation = await _context.WeatherObservations.Where(wo => wo.Time.DayOfYear == dateTime.DayOfYear).ToListAsync();
 
             if (weatherObservation == null)
             {
@@ -44,10 +44,10 @@ namespace NGKHandIn3.Controllers
         }
 
         // GET: api/WeatherObservationPeriod/start-end
-        [HttpGet("{start}-{end}")]
+        [HttpGet("{start}:{end}")]
         public async Task<ActionResult<IEnumerable<WeatherObservation>>> GetWeatherObservationPeriod(DateTime start, DateTime end)
         {
-            var weatherObservation = await _context.WeatherObservations.Where(wo => wo.Time < end && wo.Time > start).ToListAsync();
+            var weatherObservation = await _context.WeatherObservations.Where(wo => wo.Time.DayOfYear <= end.DayOfYear && wo.Time.DayOfYear >= start.DayOfYear).ToListAsync();
 
             if (weatherObservation == null)
             {
@@ -57,6 +57,7 @@ namespace NGKHandIn3.Controllers
         }
 
         // POST: api/WeatherObservations
+        // Skal der authorizes på noget bestemt her?
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<WeatherObservation>> PostWeatherObservation(WeatherObservation weatherObservation)
@@ -64,7 +65,7 @@ namespace NGKHandIn3.Controllers
             _context.WeatherObservations.Add(weatherObservation);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetWeatherObservation", new { id = weatherObservation.Id }, weatherObservation);
+            return CreatedAtAction("GetWeatherObservation", new { DateTime = weatherObservation.Time.DayOfYear }, weatherObservation);
         }
     }
 }
