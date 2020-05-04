@@ -44,7 +44,16 @@ namespace NGKHandIn3.Controllers
             user.Username = user.Username.ToLower();
             var userNameExist = await _context.Users.Where(u => u.Username == user.Username).FirstOrDefaultAsync();
             if (userNameExist != null)
-                return BadRequest(new {ErrorMessage = "That username is already taken"});
+                return BadRequest(new { ErrorMessage = "That username is already taken" });
+
+            var newUser = new User
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Username = user.Username,
+            };
+
+            //var userCreationResult = await _userManager.CreateAsync(newUser, user.Password);
 
             // Der mangler noget kode her. Dette kunne eventuelt også være i UserService.
             // Se "ASP Core Authentication & Authorisation" slide 12 fra lektion 12 for hjælp.
