@@ -21,10 +21,13 @@ namespace NGKHandIn3.Migrations
 
             modelBuilder.Entity("NGKHandIn3.Models.User", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
@@ -32,16 +35,13 @@ namespace NGKHandIn3.Migrations
                     b.Property<string>("LastName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Password")
+                    b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Token")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Username")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
+                    b.HasKey("UserId");
 
                     b.ToTable("Users");
                 });
@@ -99,7 +99,7 @@ namespace NGKHandIn3.Migrations
                             LocationName = "Denmark",
                             Longitude = 65.200000000000003,
                             Temperature = 65.0,
-                            Time = new DateTime(2020, 4, 17, 0, 0, 0, 0, DateTimeKind.Local)
+                            Time = new DateTime(2020, 5, 4, 0, 0, 0, 0, DateTimeKind.Local)
                         },
                         new
                         {
@@ -110,7 +110,7 @@ namespace NGKHandIn3.Migrations
                             LocationName = "Sweden",
                             Longitude = 90.200000000000003,
                             Temperature = 30.0,
-                            Time = new DateTime(2020, 4, 27, 3, 0, 0, 0, DateTimeKind.Local)
+                            Time = new DateTime(2020, 5, 14, 3, 0, 0, 0, DateTimeKind.Local)
                         },
                         new
                         {
@@ -121,7 +121,7 @@ namespace NGKHandIn3.Migrations
                             LocationName = "Belgium",
                             Longitude = 90.200000000000003,
                             Temperature = 30.0,
-                            Time = new DateTime(2020, 4, 27, 4, 0, 0, 0, DateTimeKind.Local)
+                            Time = new DateTime(2020, 5, 14, 4, 0, 0, 0, DateTimeKind.Local)
                         },
                         new
                         {
@@ -132,7 +132,7 @@ namespace NGKHandIn3.Migrations
                             LocationName = "California",
                             Longitude = 43.200000000000003,
                             Temperature = 6.0,
-                            Time = new DateTime(2020, 4, 27, 5, 0, 0, 0, DateTimeKind.Local)
+                            Time = new DateTime(2020, 5, 14, 5, 0, 0, 0, DateTimeKind.Local)
                         });
                 });
 #pragma warning restore 612, 618

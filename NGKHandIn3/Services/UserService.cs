@@ -38,7 +38,7 @@ namespace NGKHandIn3.Services
 
         public User Authenticate(string username, string password)
         {
-            User user = Context.Users.SingleOrDefault(user => user.Username == username && user.Password == password);
+            User user = Context.Users.SingleOrDefault(user => user.Email == username && user.PasswordHash == password);
 
             // return null if user not found
             if (user == null)
@@ -46,12 +46,12 @@ namespace NGKHandIn3.Services
 
             // authentication successful so generate jwt token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+            var key = Encoding.ASCII.GetBytes(_appSettings.SecretKey);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.Name, user.Id.ToString())
+                    new Claim(ClaimTypes.Name, user.UserId.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -60,7 +60,7 @@ namespace NGKHandIn3.Services
             user.Token = tokenHandler.WriteToken(token);
 
             // remove password before returning
-            user.Password = null;
+            user.PasswordHash = null;
 
             return user;
         }

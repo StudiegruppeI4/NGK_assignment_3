@@ -13,6 +13,11 @@ using Microsoft.Extensions.Logging;
 using NGKHandIn3.Models;
 using Microsoft.EntityFrameworkCore;
 using NGKHandIn3.Services;
+using NGKHandIn3.Helpers;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using NGKHandIn3.Hubs;
 
 namespace NGKHandIn3
 {
@@ -28,12 +33,41 @@ namespace NGKHandIn3
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson();
+            services.AddCors();
             services.AddDbContext<ApplicationContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-
-
             services.AddScoped<IUserService, UserService>();
+
+            // configure strongly typed settings objects
+            var appSettingsSection = Configuration.GetSection("AppSettings");
+            services.Configure<AppSettings>(appSettingsSection);
+
+            var appSettings = appSettingsSection.Get<AppSettings>();
+            var key = Encoding.ASCII.GetBytes(appSettings.SecretKey);
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = "https://localhost:44309/",
+                    ClockSkew = TimeSpan.Zero,
+                    ValidateLifetime = true,
+                    RequireExpirationTime = true,
+                    ValidAudience = "https://localhost:44309/"
+                };
+            });
+            services.AddAuthorization();
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,14 +80,23 @@ namespace NGKHandIn3
 
             app.UseHttpsRedirection();
 
+            app.UseCors(x => x
+                .SetIsOriginAllowed(x => _ = true)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials());
+
             app.UseRouting();
 
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseAuthorization();
+            app.UseStaticFiles();
+            app.UseCookiePolicy();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<ObservationsHub>("/observations");
             });
         }
     }

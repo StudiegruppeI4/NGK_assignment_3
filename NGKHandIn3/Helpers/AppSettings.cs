@@ -7,6 +7,7 @@ namespace NGKHandIn3.Helpers
 {
     public class AppSettings
     {
-        public string Secret { get; set; }
+        public string SecretKey { get; set; }
+        public int BcryptWorkfactor { get; set; }
     }
 }

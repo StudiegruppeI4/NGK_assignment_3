@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NGKHandIn3.Models;
 using NGKHandIn3.Services;
+using NGKHandIn3.Utilities;
 using static BCrypt.Net.BCrypt;
 
 namespace NGKHandIn3.Controllers
@@ -30,7 +31,7 @@ namespace NGKHandIn3.Controllers
         [HttpPost("Authenticate"), AllowAnonymous]
         public IActionResult Authenticate([FromBody]User userParam)
         {
-            var user = _userService.Authenticate(userParam.Username, userParam.Password);
+            var user = _userService.Authenticate(userParam.Email, userParam.Email);
 
             if (user == null)
                 return BadRequest(new { message = "Username or password is incorrect" });
@@ -39,34 +40,44 @@ namespace NGKHandIn3.Controllers
         }
 
         [HttpPost("Register"), AllowAnonymous]
-        public async Task<ActionResult<User>> Register(User user)
+        public async Task<ActionResult<Token>> Register(RegisterUser newUser)
         {
-            user.Username = user.Username.ToLower();
-            var userNameExist = await _context.Users.Where(u => u.Username == user.Username).FirstOrDefaultAsync();
-            if (userNameExist != null)
-                return BadRequest(new { ErrorMessage = "That username is already taken" });
+            newUser.Email = newUser.Email.ToLower();
+            var emailExist = await _context.Users.Where(u => u.Email == newUser.Email).FirstOrDefaultAsync();
+            if (emailExist != null)
+                return BadRequest(new { ErrorMessage = "That email is already taken" });
 
-            var newUser = new User
+            var user = new User
             {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Username = user.Username,
+                FirstName = newUser.FirstName,
+                LastName = newUser.LastName,
+                Email = newUser.Email,
+                PasswordHash = HashPassword(newUser.Password, BcryptWorkfactor)
             };
 
-            //var userCreationResult = await _userManager.CreateAsync(newUser, user.Password);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-            // Der mangler noget kode her. Dette kunne eventuelt også være i UserService.
-            // Se "ASP Core Authentication & Authorisation" slide 12 fra lektion 12 for hjælp.
-            // HUSK! at ændre returtypen til en eller anden "TokenDto". Samt ændre parametren til hvad end Register / Login skal tage.
-
-            return null;
+            var jwtToken = new Token();
+            jwtToken.JWT = JWTUtilities.GenerateToken(user.FirstName, user.LastName, user.Email, user.UserId);
+            return Ok(new { user = user.UserId, token = jwtToken});
         }
 
         [HttpPost("Login"), AllowAnonymous]
-        public async Task<ActionResult<User>> Login(User user)
+        public async Task<ActionResult<Token>> Login(LoginUser login)
         {
-            // Se kommentarer i "Register".
-            return null;
+            login.Email = login.Email.ToLower();
+            var user = await _context.Users.Where(u => u.Email == login.Email).FirstOrDefaultAsync();
+            if (user != null)
+            {
+                var validPassword = Verify(login.Password, user.PasswordHash);
+                if (validPassword)
+                {
+                    return new Token() {JWT = JWTUtilities.GenerateToken(user.FirstName, user.LastName, user.Email, user.UserId)};
+                }
+            }
+            ModelState.AddModelError(string.Empty, "Wrong email or password");
+            return BadRequest(ModelState);
         }
     }
 }
